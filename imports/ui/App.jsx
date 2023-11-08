@@ -17,7 +17,7 @@ const togglePrivate = ({ _id, isPrivate }) => {
 const deleteTask = ({ _id }) => Meteor.call('tasks.remove', _id);
 
 export const App = () => {
-  const filter = {};
+  const filter = { };
 
   const [hideCompleted, setHideCompleted] = useState(false);
 
@@ -25,15 +25,35 @@ export const App = () => {
     _.set(filter, 'checked', false);
   }
 
-  const { tasks, incompleteTasksCount, user } = useTracker(() => {
-    Meteor.subscribe('tasks');
+  const {
+      myTasks,
+      otherTasks,
+      incompleteTasksCount,
+      user,
+      myTasksHandle,
+      allTasksHandle,
+      privateTasksHandle,
+  } = useTracker(() => {
+    const allTasksHandle = Meteor.subscribe('allTasks');
+    const myTasksHandle = Meteor.subscribe('myTasks');
+    const privateTasksHandle = Meteor.subscribe('privateTasks');
 
     return ({
-      tasks: Tasks.find(filter, {sort: {createdAt: -1}}).fetch(),
+      myTasks: Tasks.find(
+          {...filter, username: 'meteorite'},
+          {sort: {createdAt: -1}}
+      ).fetch(),
+      otherTasks: Tasks.find(
+          {...filter, username: {$ne: 'meteorite'}},
+          {sort: {createdAt: -1}}
+      ).fetch(),
       incompleteTasksCount: Tasks.find({checked: {$ne: true}}).count(),
       user: Meteor.user(),
+      allTasksHandle,
+      myTasksHandle,
+      privateTasksHandle,
     });
-  });
+  },[hideCompleted]);
 
   if (!user) {
     return (
@@ -42,6 +62,22 @@ export const App = () => {
       </div>
     );
   }
+
+  if (!myTasksHandle.ready() || !allTasksHandle.ready() || !privateTasksHandle.ready()) {
+    return (
+      <div className="simple-todos-react loading">
+        <h1>
+            <span className="loader"></span>
+            <div>{!myTasksHandle.ready() && 'myTasksHandle is still loading...'}</div>
+            <div>{!allTasksHandle.ready() && 'allTasksHandle is still loading...'}</div>
+            <div>{!privateTasksHandle.ready() && 'privateTasksHandle is still loading...'}</div>
+        </h1>
+      </div>
+    );
+  }
+
+    console.log('myTasks', myTasks.length);
+    console.log('otherTasks', otherTasks.length);
 
   return (
     <div className="simple-todos-react">
@@ -59,16 +95,39 @@ export const App = () => {
         </label>
       </div>
 
-      <ul className="tasks">
-        { tasks.map(task => <Task
+      <div className="tasks">
+        <ul>
+        { myTasks.length === 0 && (
+          <div className="no-tasks">
+              <p>I don't have any tasks yet. Add one below!</p>
+          </div>
+        )}
+        { myTasks.map(task => <Task
           key={ task._id }
           task={ task }
           onCheckboxClick={toggleChecked}
           onDeleteClick={deleteTask}
           onTogglePrivateClick={togglePrivate}
         />) }
-      </ul>
+        </ul>
+      </div>
 
+      <div className="tasks">
+        <ul>
+            { otherTasks.length === 0 && (
+                <div className="no-tasks">
+                    <p>No other tasks yet. They should add more!</p>
+                </div>
+            )}
+            { otherTasks.map(task => <Task
+                key={ task._id }
+                task={ task }
+                onCheckboxClick={toggleChecked}
+                onDeleteClick={deleteTask}
+                onTogglePrivateClick={togglePrivate}
+            />) }
+        </ul>
+      </div>
       <TaskForm />
     </div>
   );

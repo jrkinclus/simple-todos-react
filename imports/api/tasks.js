@@ -1,5 +1,6 @@
 import { Mongo } from 'meteor/mongo';
 import { check } from 'meteor/check';
+import { publishComposite } from 'meteor/reywood:publish-composite';
 
 export const Tasks = new Mongo.Collection('tasks');
 
@@ -67,12 +68,66 @@ Meteor.methods({
 });
 
 if (Meteor.isServer) {
-  Meteor.publish('tasks', function() {
-    return Tasks.find({
-      $or: [
-        { private: { $ne: true } },
-        { owner: this.userId }
+  publishComposite('allTasks', function() {
+    return {
+      find() {
+       return Meteor.users.find();
+     },
+      children: [
+        {
+            find(user) {
+                return Tasks.find({
+                    owner: user._id,
+                    isPrivate: {$ne: true},
+                  // Publish only partial fields for other people's tasks
+                },{fields: {
+                    owner: 1,
+                    username: 1,
+                    isPrivate: 1,
+                    checked: 1,
+                    createdAt: 1,
+                }});
+            }
+        }
       ]
-    });
+    };
+  });
+
+
+  publishComposite('myTasks', function() {
+    return {
+      find() {
+        return Meteor.users.find(this.userId);
+      },
+      children: [
+        {
+          find(user) {
+            // Publish all fields for my tasks
+            return Tasks.find({
+              owner: user._id
+            });
+          }
+        }
+      ]
+    };
+  })
+
+
+  publishComposite('privateTasks', function() {
+    return {
+      find() {
+        return Meteor.users.find(this.userId);
+      },
+      children: [
+        {
+          find(user) {
+            // Publish only their existance for counting incomplete tasks
+            return Tasks.find({
+              owner: user._id
+            },  {fields: { isPrivate: 1, isChecked: 1 }});
+          }
+        }
+      ]
+    };
   })
 }

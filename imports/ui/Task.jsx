@@ -10,7 +10,12 @@ export const Task = ({ task, onCheckboxClick, onDeleteClick, onTogglePrivateClic
     <li className={classes}>
       <button onClick={ () => onDeleteClick(task) }>&times;</button>
       <button onClick={ () => onTogglePrivateClick(task) }>{ task.isPrivate ? 'Private' : 'Public' }</button>
-      <span>{ task.text } { task.username && <i>({ task.username })</i> }</span>
+      <span>
+          { task.text }
+          { task.username === 'meteorite' && !task.text && <i>Task text not available despite subscriptions ready?</i>}
+          {' '}
+          { task.username && <i>({ task.username })</i> }
+      </span>
       <input
         type="checkbox"
         checked={ Boolean(task.isChecked) }
