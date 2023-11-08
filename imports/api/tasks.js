@@ -71,7 +71,7 @@ if (Meteor.isServer) {
   publishComposite('allTasks', function() {
     return {
       find() {
-       return Meteor.users.find();
+       return Meteor.users.find(this.userId, { fields: { username: 1 } });
      },
       children: [
         {
@@ -106,25 +106,6 @@ if (Meteor.isServer) {
             return Tasks.find({
               owner: user._id
             });
-          }
-        }
-      ]
-    };
-  })
-
-
-  publishComposite('privateTasks', function() {
-    return {
-      find() {
-        return Meteor.users.find(this.userId);
-      },
-      children: [
-        {
-          find(user) {
-            // Publish only their existance for counting incomplete tasks
-            return Tasks.find({
-              owner: user._id
-            },  {fields: { isPrivate: 1, isChecked: 1 }});
           }
         }
       ]

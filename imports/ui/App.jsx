@@ -32,11 +32,9 @@ export const App = () => {
       user,
       myTasksHandle,
       allTasksHandle,
-      privateTasksHandle,
   } = useTracker(() => {
     const allTasksHandle = Meteor.subscribe('allTasks');
     const myTasksHandle = Meteor.subscribe('myTasks');
-    const privateTasksHandle = Meteor.subscribe('privateTasks');
 
     return ({
       myTasks: Tasks.find(
@@ -51,7 +49,6 @@ export const App = () => {
       user: Meteor.user(),
       allTasksHandle,
       myTasksHandle,
-      privateTasksHandle,
     });
   },[hideCompleted]);
 
@@ -63,72 +60,20 @@ export const App = () => {
     );
   }
 
-  if (!myTasksHandle.ready() || !allTasksHandle.ready() || !privateTasksHandle.ready()) {
-    return (
-      <div className="simple-todos-react loading">
-        <h1>
-            <span className="loader"></span>
-            <div>{!myTasksHandle.ready() && 'myTasksHandle is still loading...'}</div>
-            <div>{!allTasksHandle.ready() && 'allTasksHandle is still loading...'}</div>
-            <div>{!privateTasksHandle.ready() && 'privateTasksHandle is still loading...'}</div>
-        </h1>
-      </div>
-    );
-  }
 
-    console.log('myTasks', myTasks.length);
-    console.log('otherTasks', otherTasks.length);
 
   return (
     <div className="simple-todos-react">
       <h1>Todo List ({ incompleteTasksCount })</h1>
 
-      <div className="filters">
-        <label>
-          <input
-              type="checkbox"
-              readOnly
-              checked={ Boolean(hideCompleted) }
-              onClick={() => setHideCompleted(!hideCompleted)}
-          />
-          Hide Completed
-        </label>
-      </div>
+      <pre>{JSON.stringify(user, null, 2)}</pre>
 
-      <div className="tasks">
-        <ul>
-        { myTasks.length === 0 && (
-          <div className="no-tasks">
-              <p>I don't have any tasks yet. Add one below!</p>
-          </div>
-        )}
-        { myTasks.map(task => <Task
-          key={ task._id }
-          task={ task }
-          onCheckboxClick={toggleChecked}
-          onDeleteClick={deleteTask}
-          onTogglePrivateClick={togglePrivate}
-        />) }
-        </ul>
-      </div>
-
-      <div className="tasks">
-        <ul>
-            { otherTasks.length === 0 && (
-                <div className="no-tasks">
-                    <p>No other tasks yet. They should add more!</p>
-                </div>
-            )}
-            { otherTasks.map(task => <Task
-                key={ task._id }
-                task={ task }
-                onCheckboxClick={toggleChecked}
-                onDeleteClick={deleteTask}
-                onTogglePrivateClick={togglePrivate}
-            />) }
-        </ul>
-      </div>
-      <TaskForm />
+       <div className="simple-todos-react loading">
+           <h1>
+               <div>{`myTasksHandle is ${myTasksHandle.ready() ? 'ready' : 'not ready'}`}</div>
+               <div>{`allTasksHandle is ${allTasksHandle.ready() ? 'ready' : 'not ready'}`}</div>
+           </h1>
+       </div>
     </div>
   );
 };
