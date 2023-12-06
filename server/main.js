@@ -2,7 +2,7 @@ import { Meteor } from 'meteor/meteor';
 import '/imports/api/tasks';
 import {Tasks} from "../imports/api/tasks";
 
-const SETUP_COUNT_MULTIPLIER = 80;
+const SETUP_COUNT_MULTIPLIER = 500;
 
 Meteor.startup(() => {
   if (!Accounts.findUserByUsername('meteorite')) {
